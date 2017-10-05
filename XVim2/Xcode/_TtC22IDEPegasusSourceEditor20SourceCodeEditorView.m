@@ -98,6 +98,16 @@ typedef enum {
     return;
 }
 
+- (void)xvim_key_g:(XVimCmdArg*)arg {
+    XVimKeyStroke* stroke = [self xvim_nextKey:arg];
+    switch (stroke.keycode) {
+        case 'g':
+            [self moveToBeginningOfDocument:self];
+            break;
+    }
+    return;
+}
+
 - (void)xvim_visual:(XVimCmdArg*)arg{
     while(true){
         XVimKeyStroke *stroke =  [self xvim_nextKey:arg];
@@ -123,6 +133,15 @@ typedef enum {
             case 'l':
                 [self moveRightAndModifySelection:self];
                 break;
+            case '$':
+                [self moveToEndOfLineAndModifySelection:self];
+                break;
+            case '0':
+                [self moveToBeginningOfLineAndModifySelection:self];
+                break;
+            case 'y':
+                [self copy:self];
+                break;
         }
     }
     return;
@@ -137,6 +156,7 @@ typedef enum {
         // For simple ascii you can just use char here instad of XVimMakeKeyCode(0, u'x')
         case 'a':
             [self moveRight:self];
+            [self xvim_insert:arg];
             break;
         case 'b':
             [self moveWordBackward:self];
@@ -162,8 +182,24 @@ typedef enum {
         case 'l':
             [self moveRight:self];
             break;
+        case '$':
+            [self moveToEndOfLine:self];
+            break;
+        case '0':
+            [self moveToBeginningOfLine:self];
+            break;
+        case 'o':
+            [self insertNewline:self];
+            [self xvim_insert:arg];
+            break;
+        case 'p':
+            [self paste:self];
+            break;
         case 'D':
             [self deleteToEndOfLine:self];
+            break;
+        case 'g':
+            [self xvim_key_g:arg];
             break;
         case 'G':
             [self moveToEndOfDocument:self];
@@ -207,7 +243,6 @@ typedef enum {
     cmd.foregroundColor = [NSColor blackColor].CGColor;
     cmd.backgroundColor = [NSColor colorWithRed:0 green:0 blue:0 alpha:0.2].CGColor;
     cmd.fontSize = 16.0;
-    
 }
 @end
 
