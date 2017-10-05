@@ -108,6 +108,17 @@ typedef enum {
     return;
 }
 
+// Save file
+- (void) xvim_comma_command:(XVimCmdArg*)arg {
+    XVimKeyStroke* stroke = [self xvim_nextKey:arg];
+    switch (stroke.keycode) {
+        case 'w':
+            [NSApp sendAction:@selector(ide_saveDocument:) to:nil from:self];
+            break;
+    }
+    return;
+}
+
 - (void)xvim_visual:(XVimCmdArg*)arg{
     while(true){
         XVimKeyStroke *stroke =  [self xvim_nextKey:arg];
@@ -224,6 +235,9 @@ typedef enum {
             break;
         case 'x':
             [self deleteForward:self];
+            break;
+        case ':':
+            [self xvim_comma_command:arg];
             break;
     }
 }
