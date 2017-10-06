@@ -91,6 +91,7 @@ typedef enum {
         case 'd':
             [self moveToBeginningOfLine:self];
             [self deleteToEndOfLine:self];
+            [self deleteBackward:self];
             break;
         case 'w':
             [self deleteWordForward:self];
@@ -153,6 +154,10 @@ typedef enum {
             case 'y':
                 [self copy:self];
                 break;
+            case 'x':
+                [self copy:self];
+                [self delete:self];
+                break;
         }
     }
     return;
@@ -166,8 +171,8 @@ typedef enum {
     switch(stroke.keycode){
         // For simple ascii you can just use char here instad of XVimMakeKeyCode(0, u'x')
         case 'a':
-            [self moveRight:self];
             [self xvim_insert:arg];
+            [self moveRight:self];
             break;
         case 'b':
             [self moveWordBackward:self];
@@ -200,6 +205,7 @@ typedef enum {
             [self moveToBeginningOfLine:self];
             break;
         case 'o':
+            [self moveToEndOfLine:self];
             [self insertNewline:self];
             [self xvim_insert:arg];
             break;
