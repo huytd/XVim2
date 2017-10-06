@@ -9,20 +9,49 @@
 #import "_TtC22IDEPegasusSourceEditor20SourceCodeEditorView.h"
 #import "NSObject+Swizzle.h"
 #import "XVimKeyStroke.h"
+#import "SourceEditorViewProxy.h"
 #import "Logger.h"
 #import "XVimCmdArg.h"
 #import <QuartzCore/QuartzCore.h>
 #import "NSObject+ExtraData.h"
 
-typedef enum {
-    XVIM_MODE_NORMAL,
-    XVIM_MODE_INSERT,
-} XVimMode;
+#define CONST_STR(_name) NSString *_name = @#_name ;
 
+CONST_STR(EDLastEvent);
+CONST_STR(EDMode);
+CONST_STR(EDProxy);
 
 @implementation _TtC22IDEPegasusSourceEditor20SourceCodeEditorView(XVim)
 + (void)xvim_hook{
     [self xvim_swizzleInstanceMethod:@selector(keyDown:) with:@selector(xvim_keyDown:)];
+}
+
+-(SourceEditorViewProxy*)proxy {
+    SourceEditorViewProxy *p = [self extraDataForName:EDProxy];
+    if (p == nil || (NSNull*)p == NSNull.null) {
+        p = [[SourceEditorViewProxy alloc] initWithSourceEditorView:self];
+        [self setExtraData:p forName:EDProxy];
+    }
+    return p;
+}
+
+-(void)xvim_setupOnFirstAppearance
+{
+    self.xvim_mode = XVIM_MODE_NORMAL;
+}
+
+-(XVimMode)xvim_mode {
+    return [self integerForName:EDMode];
+}
+
+-(void)setXvim_mode:(XVimMode)xvim_mode {
+    [self setInteger:xvim_mode forName:EDMode];
+    if (xvim_mode == XVIM_MODE_INSERT) {
+        self.proxy.cursorStyle = CursorStyleVerticalBar;
+    }
+    else {
+        self.proxy.cursorStyle = CursorStyleBlock;
+    }
 }
 
 - (NSMutableArray*)xvim_key_queue{
@@ -68,10 +97,12 @@ typedef enum {
 }
 
 - (void)xvim_insert:(XVimCmdArg*)arg{
+    self.xvim_mode = XVIM_MODE_INSERT;
     while(true){
         XVimKeyStroke *stroke =  [self xvim_nextKey:arg];
         switch(stroke.keycode){
             case u'\x1b': //ESC
+                self.xvim_mode = XVIM_MODE_NORMAL;
                 return;
             case XVimMakeKeyCode(XVIM_MOD_CTRL,  u'n'):
                 [self nextCompletion:self];
@@ -109,7 +140,6 @@ typedef enum {
     return;
 }
 
-// Save file
 - (void) xvim_comma_command:(XVimCmdArg*)arg {
     XVimKeyStroke* stroke = [self xvim_nextKey:arg];
     switch (stroke.keycode) {
@@ -165,6 +195,7 @@ typedef enum {
 
 // Normal mode event handling
 - (void)xvim_handleKeys:(XVimCmdArg*)arg{
+    self.xvim_mode = XVIM_MODE_NORMAL;
     // Handle event which can be handled by this
     XVimKeyStroke *stroke =  [self xvim_nextKey:arg];
 
